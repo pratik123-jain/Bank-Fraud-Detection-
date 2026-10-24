@@ -1,0 +1,142 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction History | FraudShield AI</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        .history-page {
+            max-width: 1150px;
+            margin: auto;
+            padding: 40px 7%;
+        }
+
+        .history-page h1 {
+            font-size: 34px;
+            color: #ffffff;
+        }
+
+        .history-page p {
+            color: #a5b4c8;
+            margin: 12px 0 25px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            background: #101f32;
+            border: 1px solid #263b51;
+            border-radius: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 650px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 16px;
+            border-bottom: 1px solid #263b51;
+            font-size: 13px;
+        }
+
+        th {
+            color: #36e0c0;
+        }
+
+        td {
+            color: #e2e8f0;
+        }
+
+        .fraud {
+            color: #ff7d91;
+            font-weight: bold;
+        }
+
+        .legitimate {
+            color: #36e0c0;
+            font-weight: bold;
+        }
+
+        .empty {
+            padding: 30px;
+            text-align: center;
+            color: #a5b4c8;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a class="brand" href="/">
+            🛡 FraudShield<span> AI</span>
+        </a>
+
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/prediction">Fraud Prediction</a>
+            <a href="/history">History</a>
+        </div>
+    </nav>
+
+    <main class="history-page">
+        <h1>Prediction <span style="color:#36e0c0">History</span></h1>
+
+        <p>Review your latest saved model predictions.</p>
+
+        <a href="{{ url_for('download_history') }}"
+   style="display:inline-block; padding:12px 20px;
+   margin-bottom:20px; background:#36e0c0;
+   color:#071525; text-decoration:none;
+   border-radius:8px; font-weight:bold;">
+    ⬇ Download CSV Report
+</a>
+
+        <div class="table-wrap">
+            {% if records %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Prediction</th>
+                            <th>Fraud Probability</th>
+                            <th>Date &amp; Time</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for record in records %}
+                            <tr>
+                                <td>{{ record["id"] }}</td>
+
+                                <td class="{{ 'fraud' if record['predicted_class'] == 1 else 'legitimate' }}">
+                                    {{ 'Potential Fraud' if record['predicted_class'] == 1 else 'Legitimate' }}
+                                </td>
+
+                                <td>
+                                    {{ "%.2f"|format(record["probability"]) }}%
+                                </td>
+
+                                <td>{{ record["created_at"] }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div class="empty">
+                    No predictions saved yet. Submit a transaction first.
+                </div>
+            {% endif %}
+        </div>
+    </main>
+
+</body>
+</html>

@@ -1,0 +1,213 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraud Prediction | FraudShield AI</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        .prediction-page {
+            max-width: 1100px;
+            margin: auto;
+            padding: 40px 7%;
+        }
+
+        .page-heading { margin-bottom: 28px; }
+        .page-heading h1 { font-size: 36px; letter-spacing: -1px; }
+        .page-heading p {
+            color: var(--muted);
+            margin-top: 12px;
+            line-height: 1.7;
+        }
+
+        .form-card {
+            background: var(--panel);
+            border: 1px solid #263b51;
+            border-radius: 16px;
+            padding: 26px;
+        }
+
+        .form-card h2 { font-size: 19px; margin-bottom: 8px; }
+        .hint {
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.7;
+            margin-bottom: 22px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .field label {
+            display: block;
+            color: #c5d3e4;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .field input, .field select {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            color: white;
+            background: #091626;
+            border: 1px solid #34465d;
+            border-radius: 7px;
+            outline: none;
+        }
+
+        .field input:focus, .field select:focus {
+            border-color: var(--accent);
+        }
+
+        .submit-btn {
+            margin-top: 24px;
+            border: 0;
+            cursor: pointer;
+        }
+
+        .result {
+            margin-top: 24px;
+            padding: 22px;
+            border: 1px solid #34465d;
+            background: #0b1929;
+            border-radius: 12px;
+        }
+
+        .result h2 { margin: 10px 0; font-size: 24px; }
+        .result p {
+            color: var(--muted);
+            line-height: 1.7;
+            font-size: 13px;
+        }
+
+        .risk-high { color: #ff7d91; }
+        .risk-low { color: var(--accent); }
+        .error { color: #ff9eaa; margin-top: 15px; }
+
+        @media(max-width: 600px) {
+            .input-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+
+<body>
+<nav class="navbar">
+    <a class="brand" href="/">🛡 FraudShield<span> AI</span></a>
+    <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/prediction">Fraud Prediction</a>
+        <a href="/history">History</a>
+    </div>
+</nav>
+
+<main class="prediction-page">
+    <div class="page-heading">
+        <h1>Transaction <span style="color:#36e0c0">Analysis</span></h1>
+        <p>Enter transaction details to estimate fraud risk.</p>
+    </div>
+
+    <form class="form-card" method="POST" action="/prediction">
+        <h2>Transaction Details</h2>
+        <p class="hint">
+            This educational prototype uses PaySim simulated mobile-money
+            transaction data. Enter numeric balances and amounts in the
+            same currency units as the dataset.
+        </p>
+
+        <div class="input-grid">
+            <div class="field">
+                <label for="step">1. Transaction Time Step</label>
+                <input id="step" name="step" type="number"
+                       min="1" step="1"
+                       value="{{ form_values.get('step', '1') }}" required>
+            </div>
+
+            <div class="field">
+                <label for="type">2. Transaction Type</label>
+                <select id="type" name="type" required>
+                    {% for option in ['PAYMENT', 'TRANSFER', 'CASH_OUT', 'CASH_IN', 'DEBIT'] %}
+                    <option value="{{ option }}"
+                        {% if form_values.get('type', 'TRANSFER') == option %}selected{% endif %}>
+                        {{ option.replace('_', ' ') }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="amount">3. Transaction Amount</label>
+                <input id="amount" name="amount" type="number"
+                       min="0" step="any"
+                       value="{{ form_values.get('amount', '5000') }}" required>
+            </div>
+
+            <div class="field">
+                <label for="oldbalanceOrg">4. Sender's Previous Balance</label>
+                <input id="oldbalanceOrg" name="oldbalanceOrg" type="number"
+                       min="0" step="any"
+                       value="{{ form_values.get('oldbalanceOrg', '10000') }}" required>
+            </div>
+
+            <div class="field">
+                <label for="newbalanceOrig">5. Sender's New Balance</label>
+                <input id="newbalanceOrig" name="newbalanceOrig" type="number"
+                       min="0" step="any"
+                       value="{{ form_values.get('newbalanceOrig', '5000') }}" required>
+            </div>
+
+            <div class="field">
+                <label for="oldbalanceDest">6. Receiver's Previous Balance</label>
+                <input id="oldbalanceDest" name="oldbalanceDest" type="number"
+                       min="0" step="any"
+                       value="{{ form_values.get('oldbalanceDest', '2000') }}" required>
+            </div>
+
+            <div class="field">
+                <label for="newbalanceDest">7. Receiver's New Balance</label>
+                <input id="newbalanceDest" name="newbalanceDest" type="number"
+                       min="0" step="any"
+                       value="{{ form_values.get('newbalanceDest', '7000') }}" required>
+            </div>
+        </div>
+
+        {% if error %}
+        <p class="error">{{ error }}</p>
+        {% endif %}
+
+        <button class="btn primary submit-btn" type="submit">
+            Analyze Transaction →
+        </button>
+    </form>
+
+    {% if result %}
+    <section class="result">
+        <p>MODEL PREDICTION</p>
+
+        <h2 class="{{ 'risk-high' if result.prediction == 1 else 'risk-low' }}">
+            {{ 'Potential Fraud Detected' if result.prediction == 1
+               else 'Model Classified as Legitimate' }}
+        </h2>
+
+        <p>
+            Estimated fraud probability:
+            <strong>{{ result.probability }}%</strong>
+        </p>
+        <p>Classification threshold: {{ result.threshold }}%</p>
+        <p>
+            Educational prototype only. PaySim uses simulated transactions;
+            this result is not proof of fraud or a financial decision.
+        </p>
+    </section>
+    {% endif %}
+</main>
+</body>
+</html>

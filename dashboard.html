@@ -1,0 +1,141 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | FraudShield AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <style>
+        .dashboard { max-width:1200px; margin:auto; padding:40px 7%; }
+        .dash-head { display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; align-items:center; margin-bottom:30px; }
+        .dash-head h1 { font-size:34px; letter-spacing:-1px; }
+        .dash-head p { color:var(--muted); margin-top:10px; font-size:13px; }
+        .metric-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+        .metric { background:var(--panel); border:1px solid #263b51; border-radius:14px; padding:22px; }
+        .metric span { color:var(--muted); font-size:12px; }
+        .metric h2 { font-size:27px; margin:15px 0 8px; overflow-wrap:anywhere; }
+        .metric small { color:var(--accent); font-size:11px; }
+        .chart-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:20px; }
+        .chart-card { background:var(--panel); border:1px solid #263b51; border-radius:14px; padding:16px; min-width:0; }
+        .chart-card h3 { font-size:15px; margin:5px 0 12px; }
+        .chart { width:100%; min-height:300px; }
+        .data-note { color:var(--muted); font-size:11px; margin-top:20px; line-height:1.7; }
+        @media(max-width:850px) {
+            .metric-grid { grid-template-columns:repeat(2,1fr); }
+            .chart-grid { grid-template-columns:1fr; }
+        }
+        @media(max-width:480px) {
+            .metric-grid { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar">
+    <a class="brand" href="/">🛡 FraudShield<span> AI</span></a>
+    <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/prediction">Fraud Prediction</a>
+        <a href="/history">History</a>
+    </div>
+</nav>
+
+<main class="dashboard">
+    <div class="dash-head">
+        <div>
+            <h1>Risk <span>Analytics</span></h1>
+            <p>Explore transaction patterns and fraud indicators.</p>
+        </div>
+        <a class="btn secondary" href="/prediction">+ Analyze Transaction</a>
+    </div>
+
+    <section class="metric-grid">
+        <div class="metric">
+            <span>Total Transactions</span>
+            <h2>{{ total_transactions }}</h2>
+            <small>Dataset records</small>
+        </div>
+        <div class="metric">
+            <span>Fraud Transactions</span>
+            <h2>{{ fraud_count }}</h2>
+            <small>Labelled fraud cases</small>
+        </div>
+        <div class="metric">
+            <span>Legitimate Transactions</span>
+            <h2>{{ legitimate_count }}</h2>
+            <small>Labelled legitimate cases</small>
+        </div>
+        <div class="metric">
+            <span>Fraud Rate</span>
+            <h2>{{ fraud_rate }}%</h2>
+            <small>Share of labelled records</small>
+        </div>
+    </section>
+
+    <section class="chart-grid">
+        <div class="chart-card">
+            <h3>Transaction Class Distribution</h3>
+            <div id="classChart" class="chart"></div>
+        </div>
+        <div class="chart-card">
+            <h3>Transaction Amount Distribution</h3>
+            <div id="amountChart" class="chart"></div>
+        </div>
+        <div class="chart-card">
+            <h3>Average Transaction Amount by Class</h3>
+            <div id="averageChart" class="chart"></div>
+        </div>
+        <div class="chart-card">
+            <h3>Fraud vs Legitimate Amounts</h3>
+            <div id="boxChart" class="chart"></div>
+        </div>
+    </section>
+
+    <p class="data-note">
+        Analytics are based on the labelled historical dataset, not live bank transactions.
+        Fraud predictions are estimates and should not be used alone to make financial decisions.
+    </p>
+</main>
+
+<script>
+const chartLayout = {
+    paper_bgcolor: "#101f32",
+    plot_bgcolor: "#101f32",
+    font: {color: "#dbe7f5"},
+    margin: {l: 45, r: 20, t: 15, b: 45},
+    xaxis: {gridcolor: "#263b51"},
+    yaxis: {gridcolor: "#263b51"},
+    autosize: true
+};
+const chartConfig = {responsive: true, displayModeBar: false};
+
+Plotly.newPlot("classChart", [{
+    x: ["Legitimate", "Fraud"],
+    y: [{{ legitimate_count }}, {{ fraud_count }}],
+    type: "bar",
+    marker: {color: ["#36e0c0", "#ff6b81"]}
+}], {...chartLayout, yaxis: {...chartLayout.yaxis, title: "Transactions"}}, chartConfig);
+
+Plotly.newPlot("amountChart", [{
+    x: {{ amount_bins | tojson }},
+    type: "histogram",
+    marker: {color: "#36a8e0"},
+    nbinsx: 35
+}], {...chartLayout, xaxis: {...chartLayout.xaxis, title: "Amount"}, yaxis: {...chartLayout.yaxis, title: "Frequency"}}, chartConfig);
+
+Plotly.newPlot("averageChart", [{
+    x: ["Legitimate", "Fraud"],
+    y: [{{ legitimate_avg }}, {{ fraud_avg }}],
+    type: "bar",
+    marker: {color: ["#36e0c0", "#ff6b81"]}
+}], {...chartLayout, yaxis: {...chartLayout.yaxis, title: "Average Amount"}}, chartConfig);
+
+Plotly.newPlot("boxChart", [
+    {y: {{ legitimate_amounts | tojson }}, name: "Legitimate", type: "box", marker: {color:"#36e0c0"}},
+    {y: {{ fraud_amounts | tojson }}, name: "Fraud", type: "box", marker: {color:"#ff6b81"}}
+], {...chartLayout, yaxis: {...chartLayout.yaxis, title: "Amount"}, showlegend: true}, chartConfig);
+</script>
+</body>
+</html>
